@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.10.0",
   "description": "A web client for Weechat",
-  "repository": "https://github.com/glowing-bear/glowing-bear",
+  "repository": "https://github.com/mikaelj/glowing-bear",
   "license": "GPLv3",
   "devDependencies": {
     "@babel/core": "^7.22.7",
