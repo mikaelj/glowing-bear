@@ -452,66 +452,176 @@ weechat.directive('inputBar', function() {
                 var activeBufferId;
 
                 // if Alt+J was pressed last...
-                if ($rootScope.showJumpKeys) {
-                    var cleanup = function() { // cleanup helper
-                        $rootScope.showJumpKeys = false;
-                        $rootScope.jumpDecimal = undefined;
-                        $scope.$parent.search = '';
-                        $scope.$parent.search_placeholder = 'Search';
-                        $rootScope.refresh_filter_predicate();
-                    };
-
-                    // ... we expect two digits now
-                    if (!$event.altKey && (code > 47 && code < 58)) {
-                        // first digit
-                        if ($rootScope.jumpDecimal === undefined) {
-                            $rootScope.jumpDecimal = code - 48;
-                            $event.preventDefault();
-                            $scope.$parent.search = $rootScope.jumpDecimal;
+                if (mikaelj_special_alt_keys_enabled) {
+                    if ($rootScope.showJumpKeys) {
+                        var cleanup = function () { // cleanup helper
+                            $rootScope.showJumpKeys = false;
+                            $rootScope.jumpDecimal = undefined;
+                            $scope.$parent.search = '';
+                            $scope.$parent.search_placeholder = 'Search';
                             $rootScope.refresh_filter_predicate();
-                        // second digit, jump to correct buffer
-                        } else {
-                            bufferNumber = ($rootScope.jumpDecimal * 10) + (code - 48);
-                            $scope.$parent.setActiveBuffer(bufferNumber, '$jumpKey');
+                        };
 
-                            $event.preventDefault();
+                        // ... we expect two digits now
+                        if (!$event.altKey && (code > 47 && code < 58)) {
+                            // first digit
+                            if ($rootScope.jumpDecimal === undefined) {
+                                $rootScope.jumpDecimal = code - 48;
+                                $event.preventDefault();
+                                $scope.$parent.search = $rootScope.jumpDecimal;
+                                $rootScope.refresh_filter_predicate();
+                                // second digit, jump to correct buffer
+                            } else {
+                                bufferNumber = ($rootScope.jumpDecimal * 10) + (code - 48);
+                                $scope.$parent.setActiveBuffer(bufferNumber, '$jumpKey');
+
+                                $event.preventDefault();
+                                cleanup();
+                            }
+                        } else {
+                            // Not a decimal digit, abort
                             cleanup();
                         }
-                    } else {
-                        // Not a decimal digit, abort
-                        cleanup();
                     }
-                }
 
-                // Left Alt+[0-9] -> jump to buffer
-                if ($event.altKey && !$event.ctrlKey && (code > 47 && code < 58) && settings.enableQuickKeys) {
-                    if (code === 48) {
-                        code = 58;
-                    }
-                    bufferNumber = code - 48 - 1 ;
-
-                    // quick select filtered entries
-                    if (($scope.$parent.search.length || settings.onlyUnread) && $scope.$parent.filteredBuffers.length) {
-                        filteredBufferNum = $scope.$parent.filteredBuffers[bufferNumber];
-                        if (filteredBufferNum !== undefined) {
-                            activeBufferId = [filteredBufferNum.number, filteredBufferNum.id];
+                    // Left Alt+[0-9] -> jump to buffer
+                    if ($event.altKey && !$event.ctrlKey && (code > 47 && code < 58) && settings.enableQuickKeys) {
+                        if (code === 48) {
+                            code = 58;
                         }
-                    } else {
-                        // Map the buffers to only their numbers and IDs so we don't have to
-                        // copy the entire (possibly very large) buffer object, and then sort
-                        // the buffers according to their WeeChat number
-                        sortedBuffers = Object.entries(models.getBuffers()).map(function([key, buffer], index) {
-                            return [buffer.number, buffer.id];
-                        }).sort(function(left, right) {
-                            // By default, Array.prototype.sort() sorts alphabetically.
-                            // Pass an ordering function to sort by first element.
-                            return left[0] - right[0];
-                        });
-                        activeBufferId = sortedBuffers[bufferNumber];
+                        bufferNumber = code - 48 - 1;
+
+                        // quick select filtered entries
+                        if (($scope.$parent.search.length || settings.onlyUnread) && $scope.$parent.filteredBuffers.length) {
+                            filteredBufferNum = $scope.$parent.filteredBuffers[bufferNumber];
+                            if (filteredBufferNum !== undefined) {
+                                activeBufferId = [filteredBufferNum.number, filteredBufferNum.id];
+                            }
+                        } else {
+                            // Map the buffers to only their numbers and IDs so we don't have to
+                            // copy the entire (possibly very large) buffer object, and then sort
+                            // the buffers according to their WeeChat number
+                            sortedBuffers = Object.entries(models.getBuffers()).map(function ([key, buffer], index) {
+                                return [buffer.number, buffer.id];
+                            }).sort(function (left, right) {
+                                // By default, Array.prototype.sort() sorts alphabetically.
+                                // Pass an ordering function to sort by first element.
+                                return left[0] - right[0];
+                            });
+                            activeBufferId = sortedBuffers[bufferNumber];
+                        }
+                        if (activeBufferId) {
+                            $scope.$parent.setActiveBuffer(activeBufferId[1]);
+                            $event.preventDefault();
+                        }
                     }
-                    if (activeBufferId) {
-                        $scope.$parent.setActiveBuffer(activeBufferId[1]);
+
+
+                    // Shitft-Tab -> nick completion backward (only commands)
+                    if (code === 9 && !$event.altKey && !$event.ctrlKey && $event.shiftKey) {
                         $event.preventDefault();
+                        $scope.completeCommand('backward');
+                        return true;
+                    }
+
+                    // Left Alt+n -> toggle nicklist
+                    if ($event.altKey && !$event.ctrlKey && code === 78) {
+                        $event.preventDefault();
+                        $rootScope.toggleNicklist();
+                        return true;
+                    }
+
+                    // Alt+A -> switch to buffer with activity
+                    if ($event.altKey && (code === 97 || code === 65)) {
+                        $event.preventDefault();
+                        $rootScope.switchToActivityBuffer();
+                        return true;
+                    }
+
+                    // Alt+Arrow up/down -> switch to prev/next adjacent buffer
+                    if ($event.altKey && !$event.ctrlKey && (code === 38 || code === 40)) {
+                        $event.preventDefault();
+                        var direction = code - 39;
+                        $rootScope.switchToAdjacentBuffer(direction);
+                        return true;
+                    }
+
+                    // Alt+L -> focus on input bar
+                    if ($event.altKey && (code === 76 || code === 108)) {
+                        $event.preventDefault();
+                        inputNode.focus();
+                        inputNode.setSelectionRange($scope.command.length, $scope.command.length);
+                        return true;
+                    }
+
+                    // Alt+< -> switch to previous buffer
+                    // https://w3c.github.io/uievents-code/#code-IntlBackslash
+                    // Support both backquote and intlbackslash for this action, since macos is weird
+                    // https://github.com/microsoft/vscode/issues/65082
+                    if ($event.altKey && (code === 60 || code === 226 || key === "IntlBackslash" || key === "Backquote")) {
+                        var previousBuffer = models.getPreviousBuffer();
+                        if (previousBuffer) {
+                            models.setActiveBuffer(previousBuffer.id);
+                            $event.preventDefault();
+                            return true;
+                        }
+                    }
+
+                    // Double-tap Escape -> disconnect
+                    if (code === 27) {
+                        $event.preventDefault();
+
+                        // Check if a modal is visible. If so, close it instead of disconnecting
+                        var modals = document.querySelectorAll('.gb-modal');
+                        for (var modalId = 0; modalId < modals.length; modalId++) {
+                            if (modals[modalId].getAttribute('data-state') === 'visible') {
+                                modals[modalId].setAttribute('data-state', 'hidden');
+                                return true;
+                            }
+                        }
+
+                        if (typeof $scope.lastEscape !== "undefined" && (Date.now() - $scope.lastEscape) <= 500) {
+                            // Double-tap
+                            connection.disconnect();
+                        }
+                        $scope.lastEscape = Date.now();
+                        return true;
+                    }
+
+                    // Alt+G -> focus on buffer filter input
+                    if ($event.altKey && (code === 103 || code === 71)) {
+                        $event.preventDefault();
+                        if (!$scope.$parent.isSidebarVisible()) {
+                            $scope.$parent.showSidebar();
+                        }
+                        setTimeout(function () {
+                            document.getElementById('bufferFilter').focus();
+                        });
+                        return true;
+                    }
+
+                    // Alt-h -> Toggle all as read
+                    if ($event.altKey && !$event.ctrlKey && code === 72) {
+                        var buffers = models.getBuffers();
+                        Object.entries(buffers).forEach(function ([key, buffer], index) {
+                            buffer.unread = 0;
+                            buffer.notification = 0;
+                        });
+                        var servers = models.getServers();
+                        Object.entries(servers).forEach(function ([key, server], index) {
+                            server.unread = 0;
+                        });
+                        connection.sendHotlistClearAll();
+                    }
+
+                    // Alt+J -> Jump to buffer
+                    if ($event.altKey && (code === 106 || code === 74)) {
+                        $event.preventDefault();
+                        // reset search state and show jump keys
+                        $scope.$parent.search = '';
+                        $scope.$parent.search_placeholder = 'Number';
+                        $rootScope.showJumpKeys = true;
+                        return true;
                     }
                 }
 
@@ -521,113 +631,6 @@ weechat.directive('inputBar', function() {
                     $scope.iterCandidate = tmpIterCandidate;
                     $scope.completeNick();
                     $scope.completeCommand('forward');
-                    return true;
-                }
-
-                // Shitft-Tab -> nick completion backward (only commands)
-                if (code === 9 && !$event.altKey && !$event.ctrlKey && $event.shiftKey) {
-                    $event.preventDefault();
-                    $scope.completeCommand('backward');
-                    return true;
-                }
-
-                // Left Alt+n -> toggle nicklist
-                if ($event.altKey && !$event.ctrlKey && code === 78) {
-                    $event.preventDefault();
-                    $rootScope.toggleNicklist();
-                    return true;
-                }
-
-                // Alt+A -> switch to buffer with activity
-                if ($event.altKey && (code === 97 || code === 65)) {
-                    $event.preventDefault();
-                    $rootScope.switchToActivityBuffer();
-                    return true;
-                }
-
-                // Alt+Arrow up/down -> switch to prev/next adjacent buffer
-                if ($event.altKey && !$event.ctrlKey && (code === 38 || code === 40)) {
-                    $event.preventDefault();
-                    var direction = code - 39;
-                    $rootScope.switchToAdjacentBuffer(direction);
-                    return true;
-                }
-
-                // Alt+L -> focus on input bar
-                if ($event.altKey && (code === 76 || code === 108)) {
-                    $event.preventDefault();
-                    inputNode.focus();
-                    inputNode.setSelectionRange($scope.command.length, $scope.command.length);
-                    return true;
-                }
-
-                // Alt+< -> switch to previous buffer
-                // https://w3c.github.io/uievents-code/#code-IntlBackslash
-                // Support both backquote and intlbackslash for this action, since macos is weird
-                // https://github.com/microsoft/vscode/issues/65082
-                if ($event.altKey && (code === 60 || code === 226 || key === "IntlBackslash" || key === "Backquote"))  {
-                    var previousBuffer = models.getPreviousBuffer();
-                    if (previousBuffer) {
-                        models.setActiveBuffer(previousBuffer.id);
-                        $event.preventDefault();
-                        return true;
-                    }
-                }
-
-                // Double-tap Escape -> disconnect
-                if (code === 27) {
-                    $event.preventDefault();
-
-                    // Check if a modal is visible. If so, close it instead of disconnecting
-                    var modals = document.querySelectorAll('.gb-modal');
-                    for (var modalId = 0; modalId < modals.length; modalId++) {
-                        if (modals[modalId].getAttribute('data-state') === 'visible') {
-                            modals[modalId].setAttribute('data-state', 'hidden');
-                            return true;
-                        }
-                    }
-
-                    if (typeof $scope.lastEscape !== "undefined" && (Date.now() - $scope.lastEscape) <= 500) {
-                        // Double-tap
-                        connection.disconnect();
-                    }
-                    $scope.lastEscape = Date.now();
-                    return true;
-                }
-
-                // Alt+G -> focus on buffer filter input
-                if ($event.altKey && (code === 103 || code === 71)) {
-                    $event.preventDefault();
-                    if (!$scope.$parent.isSidebarVisible()) {
-                        $scope.$parent.showSidebar();
-                    }
-                    setTimeout(function() {
-                        document.getElementById('bufferFilter').focus();
-                    });
-                    return true;
-                }
-
-                // Alt-h -> Toggle all as read
-                if ($event.altKey && !$event.ctrlKey && code === 72) {
-                    var buffers = models.getBuffers();
-                    Object.entries(buffers).forEach(function([key, buffer], index) {
-                        buffer.unread = 0;
-                        buffer.notification = 0;
-                    });
-                    var servers = models.getServers();
-                    Object.entries(servers).forEach(function([key, server], index) {
-                        server.unread = 0;
-                    });
-                    connection.sendHotlistClearAll();
-                }
-
-                // Alt+J -> Jump to buffer
-                if ($event.altKey && (code === 106 || code === 74)) {
-                    $event.preventDefault();
-                    // reset search state and show jump keys
-                    $scope.$parent.search = '';
-                    $scope.$parent.search_placeholder = 'Number';
-                    $rootScope.showJumpKeys = true;
                     return true;
                 }
 
@@ -673,6 +676,7 @@ weechat.directive('inputBar', function() {
                     $scope.sendMessage();
                     return true;
                 }
+            
 
                 var bufferlines = document.getElementById("bufferlines");
                 var lines;
@@ -745,9 +749,11 @@ weechat.directive('inputBar', function() {
                     return true;
                 }
 
+                if (mikaelj_special_alt_keys_enabled) {
                 // Alt key down -> display quick key legend
                 if ($event.type === "keydown" && code === 18 && !$event.ctrlKey && !$event.shiftKey && settings.enableQuickKeys) {
                     $rootScope.showQuickKeys = true;
+                }
                 }
             };
 
