@@ -417,6 +417,8 @@ weechat.directive('inputBar', function() {
 
             // Handle key presses in the input bar
             $rootScope.handleKeyPress = function($event) {
+                var mikaelj_special_alt_keys_enabled = false;
+
                 // don't do anything if not connected
                 if (!$rootScope.connected) {
                     return true;
@@ -451,10 +453,7 @@ weechat.directive('inputBar', function() {
                 var filteredBufferNum;
                 var activeBufferId;
 
-                var mikaelj_special_alt_keys_enabled = false;
-
                 // if Alt+J was pressed last...
-                if (mikaelj_special_alt_keys_enabled) {
                     if ($rootScope.showJumpKeys) {
                         var cleanup = function () { // cleanup helper
                             $rootScope.showJumpKeys = false;
@@ -486,6 +485,7 @@ weechat.directive('inputBar', function() {
                         }
                     }
 
+                if (mikaelj_special_alt_keys_enabled) {
                     // Left Alt+[0-9] -> jump to buffer
                     if ($event.altKey && !$event.ctrlKey && (code > 47 && code < 58) && settings.enableQuickKeys) {
                         if (code === 48) {
