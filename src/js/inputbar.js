@@ -417,7 +417,7 @@ weechat.directive('inputBar', function() {
 
             // Handle key presses in the input bar
             $rootScope.handleKeyPress = function($event) {
-                var mikaelj_special_alt_keys_enabled = false;
+                var mikaeljSpecialKeysEnabled = false;
 
                 // don't do anything if not connected
                 if (!$rootScope.connected) {
@@ -485,7 +485,7 @@ weechat.directive('inputBar', function() {
                         }
                     }
 
-                if (mikaelj_special_alt_keys_enabled) {
+                if (mikaeljSpecialKeysEnabled) {
                     // Left Alt+[0-9] -> jump to buffer
                     if ($event.altKey && !$event.ctrlKey && (code > 47 && code < 58) && settings.enableQuickKeys) {
                         if (code === 48) {
@@ -751,7 +751,7 @@ weechat.directive('inputBar', function() {
                     return true;
                 }
 
-                if (mikaelj_special_alt_keys_enabled) {
+                if (mikaeljSpecialKeysEnabled) {
                 // Alt key down -> display quick key legend
                 if ($event.type === "keydown" && code === 18 && !$event.ctrlKey && !$event.shiftKey && settings.enableQuickKeys) {
                     $rootScope.showQuickKeys = true;
