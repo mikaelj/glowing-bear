@@ -451,6 +451,8 @@ weechat.directive('inputBar', function() {
                 var filteredBufferNum;
                 var activeBufferId;
 
+                var mikaelj_special_alt_keys_enabled = false;
+
                 // if Alt+J was pressed last...
                 if (mikaelj_special_alt_keys_enabled) {
                     if ($rootScope.showJumpKeys) {
