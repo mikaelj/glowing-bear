@@ -393,7 +393,8 @@ weechat.controller('WeechatCtrl', ['$rootScope', '$scope', '$store', '$timeout',
     };
 
     $rootScope.hideSidebar = function() {
-        if (utils.isMobileUi()) {
+        // mikaelj: always hide sidebar.
+        if (true || utils.isMobileUi()) {
             // make sure nicklist is hidden
             document.getElementById('sidebar').setAttribute('data-state', 'hidden');
             document.getElementById('content').setAttribute('sidebar-state', 'hidden');
@@ -409,7 +410,8 @@ weechat.controller('WeechatCtrl', ['$rootScope', '$scope', '$store', '$timeout',
 
     // toggle sidebar (if on mobile)
     $scope.toggleSidebar = function() {
-        if (utils.isMobileUi()) {
+        // mikaelj: always hide sidebar.
+        if (true || utils.isMobileUi()) {
             if ($scope.isSidebarVisible()) {
                 $scope.hideSidebar();
             } else {
