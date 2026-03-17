@@ -1,7 +1,6 @@
 <div id="inputform" imgur-drop>
   <div class="input-group">
-    <textarea id="{{inputId}}" class="form-control favorite-font" ng-trim="false" rows="2" ng-change="inputChanged()" ng-model="command" ng-focus="hideSidebar()" ng-paste="inputPasted($event)">
-    </textarea>
+    <div id="{{inputId}}" class="form-control favorite-font" contenteditable="true" ng-focus="hideSidebar()" ng-paste="inputPasted($event)"></div>
     <span class="input-group-btn">
       <button class="btn btn-complete-nick unselectable mobile" title="Complete nick" ng-click="handleCompleteNickButton($event)"><i class="glyphicon glyphicon-bullhorn"></i></button>
       <button type="button" class="btn btn-send-image unselectable" title="Send image" ng-click="pickImage()"><i class="glyphicon glyphicon-picture"></i></button>

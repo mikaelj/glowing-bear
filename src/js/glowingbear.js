@@ -388,10 +388,10 @@ weechat.controller('WeechatCtrl', ['$rootScope', '$scope', '$store', '$timeout',
         document.getElementById('content').setAttribute('sidebar-state', 'visible');
         if (utils.isMobileUi()) {
             // de-focus the input bar when opening the sidebar on mobile, so that the keyboard goes down
-            // TODO: this should be using get element by id, since there is other texareas
-            Object.entries(document.getElementsByTagName('textarea')).forEach(function([key, elem]) {
-                $timeout(function(){elem.blur();});
-            });
+            var sendMessageEl = document.getElementById('sendMessage');
+            if (sendMessageEl) {
+                $timeout(function(){ sendMessageEl.blur(); });
+            }
         }
         $scope.swipeStatus = 1;
     };

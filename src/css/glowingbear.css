@@ -65,7 +65,12 @@ td.message {
 
 #sendMessage {
     width: 100%;
-    resize: none;
+    min-height: 2.4em;
+    max-height: 6em;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    outline: none;
 }
 
 #sendMessage:focus, #sendMessage:active {

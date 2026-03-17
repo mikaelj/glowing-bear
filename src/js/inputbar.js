@@ -30,6 +30,63 @@ weechat.directive('inputBar', function() {
             // Expose utils to be able to check if we're on a mobile UI
             $scope.utils = utils;
 
+            function getCaretPosition(element) {
+                var sel = window.getSelection();
+                if (!sel.rangeCount || !element.contains(sel.anchorNode)) return 0;
+                var range = sel.getRangeAt(0);
+                var preRange = range.cloneRange();
+                preRange.selectNodeContents(element);
+                preRange.setEnd(range.startContainer, range.startOffset);
+                return preRange.toString().length;
+            }
+
+            function setCaretPosition(element, pos) {
+                var sel = window.getSelection();
+                var range = document.createRange();
+                var walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+                var currentPos = 0;
+                var node;
+                while ((node = walker.nextNode())) {
+                    var nodeLen = node.textContent.length;
+                    if (currentPos + nodeLen >= pos) {
+                        range.setStart(node, pos - currentPos);
+                        range.collapse(true);
+                        sel.removeAllRanges();
+                        sel.addRange(range);
+                        return;
+                    }
+                    currentPos += nodeLen;
+                }
+                // pos beyond end — place at end
+                range.selectNodeContents(element);
+                range.collapse(false);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+
+            // DOM → scope sync (replaces ng-model + ng-change)
+            setTimeout(function() {
+                var inputNode = $scope.getInputNode();
+                if (inputNode) {
+                    inputNode.addEventListener('input', function() {
+                        $scope.$apply(function() {
+                            $scope.command = inputNode.innerText;
+                            $scope.inputChanged();
+                        });
+                    });
+                }
+            }, 0);
+
+            // Scope → DOM sync (for programmatic changes)
+            $scope.$watch('command', function(newVal, oldVal) {
+                if (newVal === oldVal) return;
+                var inputNode = $scope.getInputNode();
+                if (!inputNode) return;
+                if (inputNode.innerText !== (newVal || '')) {
+                    inputNode.textContent = newVal || '';
+                }
+            });
+
             // Emojify input. E.g. Turn :smile: into the unicode equivalent, but
             // don't do replacements in the middle of a word (e.g. std::io::foo)
             $scope.inputChanged = function() {
@@ -39,7 +96,7 @@ weechat.directive('inputBar', function() {
                 var emojiRegex = /^(?:[\uD800-\uDBFF][\uDC00-\uDFFF])+$/, // *only* emoji
                     changed = false,  // whether a segment was modified
                     inputNode = $scope.getInputNode(),
-                    caretPos = inputNode.selectionStart,
+                    caretPos = getCaretPosition(inputNode),
                     position = 0;  // current position in text
 
                 // use capturing group in regex to include whitespace in output array
@@ -64,7 +121,7 @@ weechat.directive('inputBar', function() {
                 if (changed) {  // Only re-assemble if something changed
                     $scope.command = segments.join('');
                     setTimeout(function() {
-                        inputNode.setSelectionRange(caretPos, caretPos);
+                        setCaretPosition(inputNode, caretPos);
                     });
                 }
             };
@@ -73,7 +130,7 @@ weechat.directive('inputBar', function() {
              * Returns the input element
              */
             $scope.getInputNode = function() {
-                return document.querySelector('textarea#' + $scope.inputId);
+                return document.getElementById($scope.inputId);
             };
 
             $scope.hideSidebar = function() {
@@ -92,7 +149,7 @@ weechat.directive('inputBar', function() {
                 var inputNode = $scope.getInputNode();
 
                 // get current caret position
-                var caretPos = inputNode.selectionStart;
+                var caretPos = getCaretPosition(inputNode);
 
                 // get current active buffer
                 var activeBuffer = models.getActiveBuffer();
@@ -116,7 +173,7 @@ weechat.directive('inputBar', function() {
                 // update current caret position
                 setTimeout(function() {
                     inputNode.focus();
-                    inputNode.setSelectionRange(nickComp.caretPos, nickComp.caretPos);
+                    setCaretPosition(inputNode, nickComp.caretPos);
                 }, 0);
             };
 
@@ -145,7 +202,7 @@ weechat.directive('inputBar', function() {
                 var inputNode = $scope.getInputNode();
 
                 // get current caret position
-                var caretPos = inputNode.selectionStart;
+                var caretPos = getCaretPosition(inputNode);
 
                 // get current active buffer
                 var activeBuffer = models.getActiveBuffer();
@@ -195,7 +252,7 @@ weechat.directive('inputBar', function() {
                     var newCursorPos = commandBeforeReplace.length + replacedWord.length + suffix.length;
                     setTimeout(function() {
                         inputNode.focus();
-                        inputNode.setSelectionRange(newCursorPos, newCursorPos);
+                        setCaretPosition(inputNode, newCursorPos);
                     }, 0);
 
                     // If there is only one item in the list, we are done, no next cycle
@@ -241,7 +298,7 @@ weechat.directive('inputBar', function() {
             $rootScope.insertAtCaret = function(toInsert) {
                 // caret position in the input bar
                 var inputNode = $scope.getInputNode(),
-                    caretPos = inputNode.selectionStart;
+                    caretPos = getCaretPosition(inputNode);
 
                 var prefix = $scope.command.substring(0, caretPos),
                     suffix = $scope.command.substring(caretPos, $scope.command.length);
@@ -257,7 +314,7 @@ weechat.directive('inputBar', function() {
                 setTimeout(function() {
                     inputNode.focus();
                     var pos = $scope.command.length - suffix.length;
-                    inputNode.setSelectionRange(pos, pos);
+                    setCaretPosition(inputNode, pos);
                     // force refresh?
                     $scope.$apply();
                 }, 0);
@@ -566,7 +623,7 @@ weechat.directive('inputBar', function() {
                     if ($event.altKey && (code === 76 || code === 108)) {
                         $event.preventDefault();
                         inputNode.focus();
-                        inputNode.setSelectionRange($scope.command.length, $scope.command.length);
+                        setCaretPosition(inputNode, $scope.command.length);
                         return true;
                     }
 
@@ -656,7 +713,7 @@ weechat.directive('inputBar', function() {
                 if ($event.type === "keydown" && code === 38 && document.activeElement === inputNode) {
                     // In case of multiline we don't want to do this unless at the first line
                     if ($scope.command) {
-                        caretPos = inputNode.selectionStart;
+                        caretPos = getCaretPosition(inputNode);
                         if ($scope.command.slice(0, caretPos).indexOf("\n") !== -1) {
                             return false;
                         }
@@ -666,7 +723,7 @@ weechat.directive('inputBar', function() {
                     // browser sets cursor position to the beginning after this key handler returns.
                     setTimeout(function() {
                         if ($scope.command) {
-                            inputNode.setSelectionRange($scope.command.length, $scope.command.length);
+                            setCaretPosition(inputNode, $scope.command.length);
                         }
                     }, 1);
                     return true;
@@ -676,7 +733,7 @@ weechat.directive('inputBar', function() {
                 if ($event.type === "keydown" && code === 40 && document.activeElement === inputNode) {
                     // In case of multiline we don't want to do this unless it's the last line
                     if ($scope.command) {
-                        caretPos = inputNode.selectionStart;
+                        caretPos = getCaretPosition(inputNode);
                         if ( $scope.command.slice(caretPos).indexOf("\n") !== -1) {
                             return false;
                         }
@@ -686,7 +743,14 @@ weechat.directive('inputBar', function() {
                     return true;
                 }
 
-                // Enter to submit, shift-enter for newline
+                // Shift+Enter -> insert newline in contenteditable
+                if ($event.type === "keydown" && code == 13 && $event.shiftKey && document.activeElement === inputNode) {
+                    $event.preventDefault();
+                    document.execCommand('insertText', false, '\n');
+                    return true;
+                }
+
+                // Enter to submit
                 if ($event.type === "keydown" && code == 13 && !$event.shiftKey && document.activeElement === inputNode) {
                     $event.preventDefault();
                     if (settings.enterSendsMessage) {
@@ -733,24 +797,24 @@ weechat.directive('inputBar', function() {
                 // Some readline keybindings
                 if (settings.readlineBindings && $event.ctrlKey && !$event.altKey && !$event.shiftKey && document.activeElement === inputNode) {
                     // get current caret position
-                    caretPos = inputNode.selectionStart;
+                    caretPos = getCaretPosition(inputNode);
                     // Ctrl-a
                     if (code == 65) {
-                        inputNode.setSelectionRange(0, 0);
+                        setCaretPosition(inputNode, 0);
                     // Ctrl-e
                     } else if (code == 69) {
-                        inputNode.setSelectionRange($scope.command.length, $scope.command.length);
+                        setCaretPosition(inputNode, $scope.command.length);
                     // Ctrl-u
                     } else if (code == 85) {
                         $scope.command = $scope.command.slice(caretPos);
                         setTimeout(function() {
-                            inputNode.setSelectionRange(0, 0);
+                            setCaretPosition(inputNode, 0);
                         });
                     // Ctrl-k
                     } else if (code == 75) {
                         $scope.command = $scope.command.slice(0, caretPos);
                         setTimeout(function() {
-                            inputNode.setSelectionRange($scope.command.length, $scope.command.length);
+                            setCaretPosition(inputNode, $scope.command.length);
                         });
                     // Ctrl-w
                     } else if (code == 87) {
@@ -758,7 +822,7 @@ weechat.directive('inputBar', function() {
                         var lastSpace = trimmedValue.replace(/\s+$/, '').lastIndexOf(' ') + 1;
                         $scope.command = $scope.command.slice(0, lastSpace) + $scope.command.slice(caretPos, $scope.command.length);
                         setTimeout(function() {
-                            inputNode.setSelectionRange(lastSpace, lastSpace);
+                            setCaretPosition(inputNode, lastSpace);
                         });
                     } else {
                         return false;
@@ -805,7 +869,11 @@ weechat.directive('inputBar', function() {
             };
             
             $scope.inputPasted = function(e) {
-                if (e.clipboardData && e.clipboardData.files && e.clipboardData.files.length) {
+                var clipboardData = e.clipboardData || (e.originalEvent && e.originalEvent.clipboardData);
+                if (!clipboardData) return true;
+
+                // Image paste (existing logic)
+                if (clipboardData.files && clipboardData.files.length) {
                     e.stopPropagation();
                     e.preventDefault();
 
@@ -823,9 +891,17 @@ weechat.directive('inputBar', function() {
                         console.log('An image was uploaded to imgur, delete it with $scope.imgurDelete(\'' + deleteHash + '\')');
                     };
 
-                    for (var i = 0; i < e.clipboardData.files.length; i++) {
-                        imgur.process(e.clipboardData.files[i], sendImageUrl);
+                    for (var i = 0; i < clipboardData.files.length; i++) {
+                        imgur.process(clipboardData.files[i], sendImageUrl);
                     }
+                    return false;
+                }
+
+                // Text paste — strip HTML, insert plain text only
+                var text = clipboardData.getData('text/plain');
+                if (text) {
+                    e.preventDefault();
+                    document.execCommand('insertText', false, text);
                     return false;
                 }
                 return true;
