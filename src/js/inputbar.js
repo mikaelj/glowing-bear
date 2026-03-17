@@ -673,7 +673,7 @@ weechat.directive('inputBar', function() {
                 }
 
                 // Enter to submit, shift-enter for newline
-                if (code == 13 && !$event.shiftKey && document.activeElement === inputNode) {
+                if ($event.type === "keydown" && code == 13 && !$event.shiftKey && document.activeElement === inputNode) {
                     $event.preventDefault();
                     if (settings.enterSendsMessage) {
                         $scope.sendMessage();
