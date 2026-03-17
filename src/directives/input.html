@@ -6,7 +6,7 @@
       <button class="btn btn-complete-nick unselectable mobile" title="Complete nick" ng-click="handleCompleteNickButton($event)"><i class="glyphicon glyphicon-bullhorn"></i></button>
       <label class="btn btn-send-image unselectable" for="imgur-upload" title="Send image">
         <i class="glyphicon glyphicon-picture"></i>
-        <input type="file" accept="image/*" multiple title="Send image" id="imgur-upload" class="imgur-upload" tabindex="-1" file-change="uploadImage($event, files)">
+        <input type="file" accept="image/*" multiple title="Send image" id="imgur-upload" class="imgur-upload" file-change="uploadImage($event, files)">
       </label>
       <button type="button" class="btn btn-send unselectable" title="Send" ng-click="sendMessage()"><i class="glyphicon glyphicon-send"></i></button>
     </span>
