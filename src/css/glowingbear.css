@@ -113,16 +113,6 @@ input[type=text], input[type=password], #sendMessage {
     cursor: pointer;
 }
 
-.btn-send-image {
-    position: relative;
-    overflow: hidden;
-    cursor: pointer;
-}
-
-.imgur-upload {
-    display: none;
-}
-
 .input-group {
     width: 100%;
 }
@@ -932,17 +922,19 @@ li.buffer.indent.private a {
     }
 
     .footer .input-group {
-        display: flex;
+        display: flex !important;
     }
 
     .footer .input-group .form-control {
-        flex: 1;
+        flex: 1 1 0% !important;
+        min-width: 0;
+        width: 0;
     }
 
     .input-group-btn {
-        display: flex;
+        display: flex !important;
         flex-direction: column;
-        width: auto;
+        width: auto !important;
     }
 
     .input-group-btn .btn {

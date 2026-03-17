@@ -281,6 +281,20 @@ weechat.directive('inputBar', function() {
                 }
             };
 
+            // Create file input dynamically to avoid iOS form accessory bar
+            $scope.pickImage = function() {
+                var input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.multiple = true;
+                input.addEventListener('change', function(e) {
+                    $scope.$apply(function() {
+                        $scope.uploadImage(e, e.target.files);
+                    });
+                });
+                input.click();
+            };
+
             var deleteCallback = function (deleteHash) {
                 // Image got sucessfully deleted.
                 // Show toast with delete link
