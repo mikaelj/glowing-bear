@@ -673,7 +673,7 @@ weechat.directive('inputBar', function() {
                 }
 
                 // Enter to submit, shift-enter for newline
-                if (code == 13 && !$event.shiftKey && document.activeElement === inputNode && settings.enterSendsMessage) {
+                if (code == 13 && !$event.shiftKey && document.activeElement === inputNode && settings.enterSendsMessage && !utils.isMobileUi()) {
                     $event.preventDefault();
                     $scope.sendMessage();
                     return true;
