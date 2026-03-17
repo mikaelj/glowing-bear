@@ -31,8 +31,8 @@ weechat.config(['$compileProvider', function ($compileProvider) {
     }
 }]);
 
-weechat.controller('WeechatCtrl', ['$rootScope', '$scope', '$store', '$timeout','$location', '$log', 'models', 'bufferResume', 'connection', 'notifications', 'utils', 'settings', '$http',
-    function ($rootScope, $scope, $store, $timeout, $location, $log, models, bufferResume, connection, notifications, utils, settings, $http)
+weechat.controller('WeechatCtrl', ['$rootScope', '$scope', '$store', '$timeout','$location', '$log', 'models', 'bufferResume', 'connection', 'notifications', 'utils', 'settings',
+    function ($rootScope, $scope, $store, $timeout, $location, $log, models, bufferResume, connection, notifications, utils, settings)
 {
 
     window.openBuffer = function(channel) {
@@ -84,12 +84,7 @@ weechat.controller('WeechatCtrl', ['$rootScope', '$scope', '$store', '$timeout',
     });
     $scope.settings = settings;
 
-    // Fetch version from package.json at runtime
-    $http.get('/package.json').then(function(response) {
-        $scope.version = response.data.version;
-    }).catch(function() {
-        $scope.version = 'unknown';
-    });
+    $scope.version = __VERSION__;
 
     //For upgrade reasons because we changed the name of host to hostField
     //check if the value might still be in the host key instead of the hostField key

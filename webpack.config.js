@@ -1,11 +1,12 @@
 "use strict";
 
 const path = require("path");
+const pkg = require('./package.json');
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
-require("webpack");
+const webpack = require("webpack");
 module.exports = {
     context: path.resolve(__dirname, 'src'),
     entry: './main.js',
@@ -53,6 +54,9 @@ module.exports = {
                 { from: "../node_modules/linkifyjs/dist/linkify.min.js" },
                 { from: "../node_modules/linkify-string/dist/linkify-string.min.js" },
             ]
+        }),
+        new webpack.DefinePlugin({
+            __VERSION__: JSON.stringify(pkg.version)
         }),
     ],
     module: {
