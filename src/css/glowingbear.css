@@ -931,15 +931,18 @@ li.buffer.indent.private a {
         width: 0;
     }
 
+    .footer .input-group .form-control,
+    .footer .input-group .form-control:focus {
+        z-index: auto;
+    }
+
     .input-group-btn {
         display: flex !important;
-        flex-direction: column;
         width: auto !important;
     }
 
     .input-group-btn .btn {
-        display: block;
-        width: 100%;
+        flex: 0 0 auto;
     }
 }
 
