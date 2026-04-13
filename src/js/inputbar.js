@@ -30,6 +30,32 @@ weechat.directive('inputBar', function() {
             // Expose utils to be able to check if we're on a mobile UI
             $scope.utils = utils;
 
+            // iOS Safari form navigation suppression:
+            // Disable other form controls when textarea has focus on mobile,
+            // so iOS doesn't show Previous/Next buttons in the keyboard accessory bar.
+            var disabledFormControls = [];
+
+            $scope.isolateFormControls = function() {
+                if (!utils.isMobileUi()) return;
+                disabledFormControls = [];
+                var allInputs = document.querySelectorAll(
+                    '#bufferFilter, #settingsModal input, #settingsModal textarea, #settingsModal select'
+                );
+                for (var i = 0; i < allInputs.length; i++) {
+                    if (!allInputs[i].disabled) {
+                        allInputs[i].disabled = true;
+                        disabledFormControls.push(allInputs[i]);
+                    }
+                }
+            };
+
+            $scope.restoreFormControls = function() {
+                for (var i = 0; i < disabledFormControls.length; i++) {
+                    disabledFormControls[i].disabled = false;
+                }
+                disabledFormControls = [];
+            };
+
             // Emojify input. E.g. Turn :smile: into the unicode equivalent, but
             // don't do replacements in the middle of a word (e.g. std::io::foo)
             $scope.inputChanged = function() {
