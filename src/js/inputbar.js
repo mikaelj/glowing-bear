@@ -405,6 +405,7 @@ weechat.directive('inputBar', function() {
                 var prefix = bufferline.prefix;
                 // Extract nick from bufferline prefix
                 var nick = prefix[prefix.length - 1].text;
+                nick = nick.replace(/^[@+]+/, '');
 
                 // Check whether the user is still online
                 var buffer = models.getBuffer(bufferline.buffer);
